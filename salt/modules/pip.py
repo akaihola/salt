@@ -174,8 +174,10 @@ def install(pkgs=None,
             cmd=cmd, pkg=pkg)
 
     treq = None
+    uploaded_requirements = False
     if requirements:
         if requirements.startswith('salt://'):
+            uploaded_requirements = True
             req = __salt__['cp.cache_file'](requirements)
             fd_, treq = tempfile.mkstemp()
             os.close(fd_)
@@ -185,7 +187,7 @@ def install(pkgs=None,
         cmd = '{cmd} --requirement "{requirements}" '.format(
             cmd=cmd, requirements=treq or requirements)
 
-    if treq is not None and runas:
+    if uploaded_requirements and runas:
         logger.debug(
             'Changing ownership of requirements file \'{0}\' to '
             'user \'{1}\''.format(treq, runas)
@@ -302,7 +304,7 @@ def install(pkgs=None,
     try:
         result = __salt__['cmd.run_all'](cmd, runas=runas, cwd=cwd)
     finally:
-        if treq:
+        if treq and uploaded_requirements:
             try:
                 os.remove(treq)
             except Exception:
